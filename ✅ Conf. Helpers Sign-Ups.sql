@@ -1,14 +1,13 @@
 Contacts.[First_Name], Contacts.[Last_Name], Contacts.[__Age] AS [Age], 
 Contacts.[Mobile_Phone], Contacts.[Email_Address],
 
-Participant_Record_Table_Member_Status_ID_Table.[Member_Status] + ' (' + (SELECT STRING_AGG(Group_Code, ',') 
-  FROM Groups G INNER JOIN Group_Participants GP ON GP.Group_ID = G.Group_ID 
-  WHERE GP.Participant_ID = Contacts.Participant_Record AND GP.Group_ID IN (499, 491,490,536)) + ')' AS [Statuses],
+(SELECT COALESCE(Participant_Record_Table_Member_Status_ID_Table.Member_Status, Participant_Record_Table_Participant_Type_ID_Table.Participant_Type) + 
+  COALESCE((SELECT ' (' + STRING_AGG(Group_Code, ', ') + ')' FROM Groups G JOIN Group_Participants GP ON GP.Group_ID=G.Group_ID 
+  WHERE GP.Participant_ID=Contacts.Participant_Record AND GP.Group_ID IN (499,491,490,536) AND GP.End_Date IS Null),'')) AS [Participant],
 
-(SELECT CASE WHEN MAX(FR.Form_Response_ID) IS NOT NULL
-  THEN '<a style="text-decoration:none;" target="_blank" href="https://mp.revival.com/mp/424/' + 
-  CAST(MAX(FR.Form_Response_ID) AS varchar(10)) + N'">✅</a>' END FROM Form_Responses FR 
-  WHERE FR.Contact_ID = Contacts.Contact_ID AND FR.Form_ID IN(86,22)) AS [App],
+(SELECT  '<a style="text-decoration:none;" target="_blank" href="https://mp.revival.com/mp/424/' + 
+  CONVERT(varchar(10), MAX(FR.Form_Response_ID)) + N'">📝 View</a>' FROM Form_Responses FR 
+ WHERE FR.Contact_ID = Contacts.Contact_ID AND FR.Form_ID IN(86,22)) AS [App],
 
 N'🚩 ' + (SELECT STRING_AGG(M.Milestone_Title, ' & ') FROM Milestones M INNER JOIN Participant_Milestones PM ON PM.Milestone_ID = M.Milestone_ID 
  WHERE PM.Participant_ID = Contacts.Participant_Record AND PM.Milestone_ID IN (47, 56, 66)) AS [Flags],
@@ -54,8 +53,7 @@ N'🚩 ' + (SELECT STRING_AGG(M.Milestone_Title, ' & ') FROM Milestones M INNER 
 
 (CASE WHEN EXISTS(SELECT * FROM Participant_Milestones PM WHERE Contacts.Participant_Record = PM.Participant_ID AND PM.Milestone_ID = 60) THEN '✅' ELSE NULL END) AS [Interview],
 
-(SELECT TOP 1 Status_Name FROM Form_Response_Statuses FRS INNER JOIN Form_Responses FR ON FR.Status_ID = FRS.Status_ID 
-  WHERE FR.Contact_ID = Contacts.Contact_ID AND FR.Form_ID = 99 ORDER BY FR.Response_Date DESC) AS [Status],
+(SELECT TOP 1 Status_Name FROM Form_Response_Statuses FRS INNER JOIN Form_Responses FR ON FR.Status_ID = FRS.Status_ID WHERE FR.Contact_ID = Contacts.Contact_ID AND FR.Form_ID = 99 ORDER BY FR.Response_Date DESC) AS [Status],
 
 (SELECT TOP 1 Status_Notes FROM Form_Responses FR WHERE FR.Contact_ID = Contacts.Contact_ID AND FR.Form_ID = 99 ORDER BY FR.Response_Date DESC) AS [Status Notes],
 
