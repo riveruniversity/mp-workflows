@@ -17,18 +17,20 @@ N'🚩 ' + (SELECT STRING_AGG(M.Milestone_Title, ' & ') FROM Milestones M INNER 
 
 (SELECT TOP 1 FORMAT(Background_Check_Started, 'MMM dd, yyyy') FROM Background_Checks BGC WHERE BGC.Contact_ID = Contacts.Contact_ID ORDER BY Background_Check_ID DESC) AS [BGC Sent],
 
-(SELECT COALESCE((
+(SELECT CASE WHEN Household_ID_Table_Address_ID_Table.Country_Code != 'US' THEN N'🌐 International'
+  ELSE COALESCE((
     SELECT TOP 1 
       CASE 
         WHEN All_Clear = 'true' THEN N'✅ Clear'
-        WHEN All_Clear = 'false' THEN '<a style="text-decoration:none;color:#475466;" href="https://mp.revival.com/mp/292-2739/'+ CONVERT(varchar(10), Contacts.Contact_ID) +'/511/'+ CONVERT(varchar(10), Background_Check_ID) + N'">🚩 Flags</a>' 
+        WHEN All_Clear = 'false' THEN N'<a style="text-decoration:none;color:#475466;" href="https://mp.revival.com/mp/292-2739/'+ CONVERT(varchar(10), Contacts.Contact_ID) +'/511/'+ CONVERT(varchar(10), Background_Check_ID) + N'">🚩 Flags</a>' 
         WHEN All_Clear IS NULL THEN N'⏳ Processing'
       END
     FROM Background_Checks BGC 
     WHERE BGC.Contact_ID = Contacts.Contact_ID 
     ORDER BY Background_Check_ID DESC
   ), N'⚠️ Needs BGC')
-) AS [BGC Status],
+END) AS [BGC Status],
+
 
 (SELECT TOP 1 Status_Name FROM Form_Response_Statuses FRS INNER JOIN Form_Responses FR ON FR.Status_ID = FRS.Status_ID 
   WHERE FR.Contact_ID = Contacts.Contact_ID AND FR.Form_ID = 95 ORDER BY FR.Response_Date DESC) AS [App Status],
