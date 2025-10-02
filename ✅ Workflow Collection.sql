@@ -104,3 +104,5 @@ Participant_Record_Table_Member_Status_ID_Table.[Member_Status] + ' (' + (SELECT
   WHERE FR.Contact_ID = Contacts.Contact_ID AND FR.Form_ID = 95) AS [App],
 
 
+-- ✅ Photo File
+(SELECT TOP 1 Unique_Name FROM dp_Files AS F WHERE F.Table_Name = 'Contacts' AND F.Record_ID = Contacts.Contact_ID) AS [Photo],
