@@ -93,6 +93,14 @@ Participant_Record_Table_Member_Status_ID_Table.[Member_Status] + ' (' + (SELECT
   ELSE Participant_Record_Table_Participant_Type_ID_Table.Participant_Type END ) AS [Participant],
 
 
+-- ✅ Group Name
+(SELECT TOP 1 G.Group_Name 
+ FROM Group_Participants GP 
+ INNER JOIN Groups G ON G.Group_ID = GP.Group_ID
+ WHERE Contacts.Participant_Record = GP.Participant_ID 
+ AND GP.Group_ID IN (550) 
+ AND GP.End_Date IS NULL) AS [Group_Name]
+
 -- 🔬 TESTING
 
 
