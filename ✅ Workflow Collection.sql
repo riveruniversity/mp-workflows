@@ -114,3 +114,38 @@ Participant_Record_Table_Member_Status_ID_Table.[Member_Status] + ' (' + (SELECT
 
 -- ✅ Photo File
 (SELECT TOP 1 Unique_Name FROM dp_Files AS F WHERE F.Table_Name = 'Contacts' AND F.Record_ID = Contacts.Contact_ID) AS [Photo],
+
+
+-- ✅ Participation Notes JSON
+(SELECT TOP 1 PD.Notes 
+  FROM Participation_Details PD 
+  INNER JOIN Event_Participants EP ON EP.Event_Participant_ID = PD.Event_Participant_ID 
+  WHERE EP.Participant_ID = Contacts.Participant_Record 
+    AND EP.Event_ID = 72500) AS [Participation Notes],
+
+  (SELECT TOP 1 JSON_VALUE(PD.Notes, '$.formResponseID') 
+  FROM Participation_Details PD 
+  INNER JOIN Event_Participants EP ON EP.Event_Participant_ID = PD.Event_Participant_ID 
+  WHERE EP.Participant_ID = Contacts.Participant_Record 
+    AND EP.Event_ID = 72500) AS [Form_Response_ID]
+
+
+-- ✅ Answer Field from Registrant Form via Participation Details
+(SELECT COALESCE(
+    (SELECT TOP 1 Response 
+    FROM Form_Response_Answers FRA 
+    INNER JOIN Form_Responses FR ON FR.Form_Response_ID = FRA.Form_Response_ID 
+    WHERE FR.Contact_ID = Contacts.Contact_ID 
+    AND FRA.Form_Field_ID = 5558),
+  (SELECT TOP 1 Response 
+    FROM Form_Response_Answers FRA 
+    WHERE FRA.Form_Response_ID = (
+        SELECT TOP 1 CAST(JSON_VALUE(PD.Notes, '$.formResponseID') AS INT)
+        FROM Participation_Details PD 
+        INNER JOIN Event_Participants EP ON EP.Event_Participant_ID = PD.Event_Participant_ID 
+        WHERE EP.Participant_ID = Contacts.Participant_Record 
+        AND EP.Event_ID = 72500
+    )
+    AND FRA.Form_Field_ID = 5566),
+    ''
+)) AS [Size],
